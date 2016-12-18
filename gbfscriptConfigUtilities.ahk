@@ -4,7 +4,7 @@
 
 ;Pushbullet config
 usePushBullet := True
-PB_Token := "o.UEWUkns1O3y7SWcaVZcQr4qmHKAiaXhT" ;o.UEWUkns1O3y7SWcaVZcQr4qmHKAiaXhT
+PB_Token := ""
 PB_Title := "GBF Bot"
 
 ;Coordinates
