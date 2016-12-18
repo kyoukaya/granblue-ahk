@@ -14,18 +14,19 @@ CoordMode Mouse, Relative
 global maxBattleNonActions := 20
 global maxWaitCount := 7 ;Timeout for quest screen
 global globalTimeoutMax := 80 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
+global post_attack_button_delay := 5000
 
-global searchURL := "" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
+global searchURL := "http://game.granbluefantasy.jp/#event/teamraid026" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
 
 global summonIconType := misc_icon ;Summons shouldn't be broken by viramate's favourite summons settings. Probably.
 global summonIconTypeSelected := misc_icon_selected 
 
-global selectOne := ""
-global selectTwo := ""
-global selectOne_X :=
-global selectOne_Y :=
-global selectTwo_X :=
-global selectTwo_Y :=
+global selectOne := "meat1.png"
+global selectTwo := "meat2.png"
+global selectOne_X := 0
+global selectOne_Y := 0
+global selectTwo_X := 0
+global selectTwo_Y := 0
 
 global genericActions := [selectOne, selectTwo, long_ok, drop_down]
 
@@ -76,17 +77,22 @@ Loop
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
 
 					attackTurns := attackTurns + 1
-					battleNonActions := 0
 
 					;ClickSummon(6)
-										
-					;ClickSkill(1,1)
+
+					ClickSkill(4,3)
+					ClickSkill(3,1)
+					ClickSkill(4,2)
+					ClickSkill(2,2)
+					ClickSkill(1,4)
+					ClickSkill(1,3)
+					ClickSkill(1,2)
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					
 					Sleep, % post_attack_button_delay
 
-					RandomClick(auto_button_X, auto_button_Y, clickVariance)
+					;RandomClick(auto_button_X, auto_button_Y, clickVariance)
 				}
 
 				else if (attackTurns >= 1)
@@ -95,8 +101,6 @@ Loop
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
 
 					attackTurns := attackTurns + 1
-					battleNonActions := 0
-					
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 
 					Sleep, % post_attack_button_delay
@@ -133,6 +137,36 @@ Loop
 			}
 			continue
 		}
+
+		else if InStr(sURL, searchSelectSummon)
+		{
+			updateLog("-----In Select Summon-----")
+
+			Send {WheelUp}
+			
+			waitCount = 0
+			
+			selectSummonAutoSelect := [select_party_auto_select, summonIconType, summonIconTypeSelected]
+			searchResult := multiImageSearch(coordX, coordY, selectSummonAutoSelect)
+			
+			if InStr(searchResult, select_party_auto_select)
+			{
+				updateLog("Party Confirm detected, clicking OK button")			
+				RandomClick(coordX + select_party_auto_select_offset_X, coordY + select_party_auto_select_offset_Y, clickVariance) 
+				continue
+			}
+			else if InStr(searchResult, summonIconType)
+			{
+				updateLog("Clicking on summon icon")
+				RandomClick(coordX + summonIconType_offset_X, coordY + summonIconType_offset_Y, clickVariance)
+			}
+			else if InStr(searchResult, summonIconTypeSelected)
+			{
+				updateLog("Clicking on first summon")	
+				RandomClick(first_summon_X, first_summon_Y, clickVariance) 		
+			}
+			continue
+		}
 		
 		else if InStr(sURL, searchURL)
 		{
@@ -158,7 +192,7 @@ Loop
 				waitCount := 0
 				RandomClick(coordX + drop_down_offset_X, coordY + drop_down_offset_Y, clickVariance)
 
-				Sleep, long_interval
+				Sleep, default_interval
 
 				RandomClick(coordX + drop_down_offset2_X, coordY + drop_down_offset2_Y, clickVariance)
 			}
@@ -202,36 +236,6 @@ Loop
 				resultsScreenCycles := 0
 				updateLog("Going to quest select page")
 				GoToPage(searchURL)
-			}
-			continue
-		}
-
-		else if InStr(sURL, searchSelectSummon)
-		{
-			updateLog("-----In Select Summon-----")
-
-			Send {WheelUp}
-			
-			waitCount = 0
-			
-			selectSummonAutoSelect := [select_party_auto_select, summonIconType, summonIconTypeSelected]
-			searchResult := multiImageSearch(coordX, coordY, selectSummonAutoSelect)
-			
-			if InStr(searchResult, select_party_auto_select)
-			{
-				updateLog("Party Confirm detected, clicking OK button")			
-				RandomClick(coordX + select_party_auto_select_offset_X, coordY + select_party_auto_select_offset_Y, clickVariance) 
-				continue
-			}
-			else if InStr(searchResult, summonIconType)
-			{
-				updateLog("Clicking on summon icon")
-				RandomClick(coordX + summonIconType_offset_X, coordY + summonIconType_offset_Y, clickVariance)
-			}
-			else if InStr(searchResult, summonIconTypeSelected)
-			{
-				updateLog("Clicking on first summon")	
-				RandomClick(first_summon_X, first_summon_Y, clickVariance) 		
 			}
 			continue
 		}

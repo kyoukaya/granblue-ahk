@@ -20,7 +20,7 @@ global first_summon_Y := 465
 global use_item_ok_X := 373
 global use_item_ok_Y := 750
 
-global GBF_winHeight := 900
+global GBF_winHeight := 1150
 global GBF_winWidth := 580
 
 ;Viramate skill offsets
@@ -32,11 +32,12 @@ global skillY = 700
 ;Time intervals
 global default_button_delay := 150
 global post_ready_button_delay := 3000
-global post_attack_button_delay := 2000
+global post_attack_button_delay := 2500
 global coop_delay := 4500
 
 global short_interval := 500
 global default_interval := 750
+global long_interval := 1500
 
 ;Configs
 global roomJoinClicks := 5
@@ -61,6 +62,20 @@ global coopJoinURL := "http://game.granbluefantasy.jp/#coopraid/offer"
 global questURL := "http://game.granbluefantasy.jp/#quest"
 global guildWarsURL := "http://game.granbluefantasy.jp/#event/teamraid"
 
+;Offsets
+global ok_button_offset_X := -20
+global ok_button_offset_Y := 5
+global drop_down_offset_X := 171
+global drop_down_offset_Y := 54
+global drop_down_offset2_X := 54
+global drop_down_offset2_Y := 14
+global long_ok_offset_X := -5
+global long_ok_offset_Y := 5
+global select_party_auto_select_offset_X := 197
+global select_party_auto_select_offset_Y := 170
+global summonIconType_offset_X := 2
+global summonIconType_offset_Y := 2
+
 ;Search Images
 global image_path := "image/"
 
@@ -76,11 +91,17 @@ global ok_button := "ok_button.png"
 global drop_down := "dropdown.png"
 
 global select_party_auto_select := "select_party_auto_select.png"
-global select_party_auto_select_2 := "2_select_party_auto_select.png"
 
 global not_enough_ap := "not_enough_ap.png"
 
 global long_ok := "long_ok.png"
+
+;init
+global globalTimeout := 0
+global attackTurns := 0
+global resultScreenCycles := 0
+global battleNonActions := 0
+global waitCount := 0
 
 ;----------------------------------------------
 ;ImageSearch wrappers
@@ -92,7 +113,7 @@ ImageSearchWrapper(byref searchResultX, byref searchResultY, imageFileName)
 	searchResultY := 0
 	
 	imagePath = %image_path%%imageFileName%
-	ImageSearch, searchResultX, searchResultY, 0, 0, GBF_winWidth, GBF_winHeight, *20 %imagePath%
+	ImageSearch, searchResultX, searchResultY, 0, 0, GBF_winWidth, GBF_winHeight, *40 %imagePath%
 	
 	if ErrorLevel = 2
 	{
@@ -177,8 +198,6 @@ RandomClick(coordX, coordY, variance)
 	Random, randX, 0 - variance, variance
 	Random, randY, 0 - variance, variance
 	
-	updateLog("Random coordinate modifiers: " . randX . ", " . randY)
-	
 	MouseMove coordX + randX, coordY + randY
 	Sleep, 100
 	Click
@@ -189,11 +208,9 @@ RandomClickWide(coordX, coordY, variance)
 	Random, randX, 0 - (variance*2), (variance*2)
 	Random, randY, 0 - variance, variance
 	
-	updateLog("Random coordinate modifiers: " . randX . ", " . randY)
-	
 	MouseMove coordX + randX, coordY + randY
 	Click down  ; Presses down the left mouse button and holds it.
-	Sleep, 2
+	Sleep, 3
 	Click up
 }
 
