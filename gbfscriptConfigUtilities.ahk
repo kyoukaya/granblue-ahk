@@ -5,7 +5,11 @@
 ;Pushbullet config
 usePushBullet := True
 <<<<<<< HEAD
+<<<<<<< HEAD
 PB_Token := "" ;Your token here
+=======
+PB_Token := ""
+>>>>>>> origin/master
 =======
 PB_Token := ""
 >>>>>>> origin/master
