@@ -4,7 +4,11 @@
 
 ;Pushbullet config
 usePushBullet := True
-PB_Token := "o.UEWUkns1O3y7SWcaVZcQr4qmHKAiaXhT" ;o.UEWUkns1O3y7SWcaVZcQr4qmHKAiaXhT
+<<<<<<< HEAD
+PB_Token := "" ;Your token here
+=======
+PB_Token := ""
+>>>>>>> origin/master
 PB_Title := "GBF Bot"
 
 ;Coordinates
@@ -23,21 +27,28 @@ global use_item_ok_Y := 750
 global GBF_winHeight := 1150
 global GBF_winWidth := 580
 
+global SelectiveSkill_X := 221
+global SelectiveSkill_Y := 378
+
+global battle_portrait_X := 122
+global battle_portrait_Y := 652
+
 ;Viramate skill offsets
 global skillX = 92
 global skillXOffset = 20
 global skillCharOffset = 82
 global skillY = 700
 
-;Time intervals
-global default_button_delay := 150
-global post_ready_button_delay := 3000
-global post_attack_button_delay := 2500
+;Timings
+global default_button_delay := 250
+global results_delay := 2500
+global post_attack_button_delay := 3500
 global coop_delay := 4500
+global post_ougi_delay := 12000
 
 global short_interval := 500
 global default_interval := 750
-global long_interval := 1500
+global long_interval := 2000
 
 ;Configs
 global roomJoinClicks := 5
@@ -75,16 +86,33 @@ global select_party_auto_select_offset_X := 197
 global select_party_auto_select_offset_Y := 170
 global summonIconType_offset_X := 2
 global summonIconType_offset_Y := 2
+global SelectiveSkill_Offset_X := 92
+global SelectiveSkill_Offset_Y := 180
 
 ;Search Images
 global image_path := "image/"
 
 global attack_button := "attack_button.png"
 
+global green_pot := "green_pot.png"
+global blue_pot := "blue_pot.png"
+global cancel_button := "cancel_button.png"
+
+global sticker_button := "sticker_button.png"
+global phalanx_sticker := "phalanx.png"
+global laserfocus_sticker := "laserfocus_sticker.png"
+
+global heal_button := "heal_button.png"
+
 global wind_icon := "wind_icon.png"
 global wind_icon_selected := "wind_icon_selected.png"
 global misc_icon := "misc_icon.png"
 global misc_icon_selected := "misc_icon_selected.png"
+global fav_icon := "fav_icon.png"
+global fav_icon_selected := "fav_icon_selected.png"
+
+global ca_on := "ca_on.png"
+global ca_off := "ca_off.png"
 
 global ok_button := "ok_button.png"
 
@@ -102,6 +130,7 @@ global attackTurns := 0
 global resultScreenCycles := 0
 global battleNonActions := 0
 global waitCount := 0
+global curRound := 0
 
 ;----------------------------------------------
 ;ImageSearch wrappers
@@ -199,8 +228,10 @@ RandomClick(coordX, coordY, variance)
 	Random, randY, 0 - variance, variance
 	
 	MouseMove coordX + randX, coordY + randY
-	Sleep, 100
-	Click
+	Sleep, 95
+	Click down  ; Presses down the left mouse button and holds it.
+	Sleep, 5
+	Click up
 }
 
 RandomClickWide(coordX, coordY, variance)
@@ -210,8 +241,24 @@ RandomClickWide(coordX, coordY, variance)
 	
 	MouseMove coordX + randX, coordY + randY
 	Click down  ; Presses down the left mouse button and holds it.
-	Sleep, 3
+	Sleep, 5
 	Click up
+}
+
+SearchAndClick(targetImage, clickVariance)
+{
+	searchList := [targetImage]
+	sResult := MultiImageSearch(coordX, coordY, searchList)
+	if InStr(sResult, targetImage)
+	{
+		RandomClick(coordX, coordY, clickVariance)
+		updateLog("We found and clicked " . targetImage)
+		Sleep, default_button_delay
+	}
+	Else
+	{
+		updateLog("Search and click failed for " . targetImage)
+	}
 }
 
 ClickSkill(character, skillNum)
@@ -228,6 +275,47 @@ ClickSkill(character, skillNum)
 	Sleep % default_button_delay
 }
 
+ClickSelectiveSkill(character, skillNum, selectNum)
+{
+	;Only handles to the 4th character 
+	selectNum_X := SelectiveSkill_X + ((selectNum - 1) * SelectiveSkill_Offset_X)
+
+	;To get to the second row of characters
+	if(selectNum > 3)
+	{
+		selectNum_Y := SelectiveSkill_Y + SelectiveSkill_Offset_Y
+	}
+	Else
+	{
+		selectNum_Y := SelectiveSkill_Y
+	}
+
+	ClickSkill(character, skillNum)
+	Sleep, default_button_delay
+	updateLog("Clicking character at " . selectNum_X . ", " . selectNum_Y)
+	RandomClick(selectNum_X, selectNum_Y, clickVariance)
+}
+
+SetOugi(bool)
+{
+	checkOugi := [ca_on, ca_off]
+	sResult := MultiImageSearch(coordX, coordY, checkOugi)
+	if (bool = True) and (InStr(sResult, ca_off))
+	{
+		updateLog("Activating ougi this turn!")
+		RandomClick(coordX, coordY, clickVariance)
+	}
+	else if (bool = False) and (InStr(sResult, ca_on))
+	{
+		updateLog("We don't want to ougi, switching it off")
+		RandomClick(coordX, coordY, clickVariance)
+	}
+	Else
+	{
+		updateLog("Ougi in check")
+	}
+}
+
 ClickSummon(summonNumber)
 {
 	summonX := (summonNumber - 1) * 77
@@ -239,8 +327,44 @@ ClickSummon(summonNumber)
 	Sleep, % default_button_delay
 	RandomClick((122 + summonX), summonY, clickVariance)
 	Sleep, % default_button_delay
-	RandomClick(420, 589, clickVariance)
+	RandomClick(420, 632, clickVariance)
 	Sleep, % default_button_delay
+}
+
+UseSticker(sticker)
+{
+	SearchAndClick(sticker_button, clickVariance)
+	Sleep, default_button_delay
+	SearchAndClick(sticker, clickVariance)
+}
+
+UsePot(PotType)
+{
+	;Using pots is kinda scary so we'll sleep a lot
+	SearchAndClick(heal_button, clickVariance)
+	Sleep, default_interval
+	checkPots := [blue_pot, green_pot]
+	sResult := MultiImageSearch(coordX, coordY, checkPots)
+	if (PotType = 0) and (InStr(sResult, blue_pot))
+	{
+		updateLog("Blue pot available, clicking")
+		RandomClick(coordX, coordY, clickVariance)
+		Sleep, default_interval
+		SearchAndClick(ok_button, clickVariance)
+		Sleep, default_interval
+		SearchAndClick(cancel_button, clickVariance)
+	}
+	else if (InStr(sResult, green_pot)) and (PotType > 0)
+	{
+		updateLog("Green pot available, using it on character " . PotType)
+		RandomClick(coordX, coordY, clickVariance)
+		Sleep, default_interval
+		RandomClick(battle_portrait_X + ((PotType - 1) * skillCharOffset), battle_portrait_Y, clickVariance)
+		updateLog(battle_portrait_X + (PotType - 1) * . ", " . battle_portrait_Y)
+		Sleep, default_interval
+		SearchAndClick(cancel_button, clickVariance)
+		Sleep, default_interval
+	}
 }
 
 FindElementInArray(ByRef foundIndex, inputArray, findThis)

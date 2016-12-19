@@ -6,27 +6,28 @@
 
 #Include gbfscriptConfigUtilities.ahk
 
-SetTimer, ForceExitApp, 3600000 ; 1h
+SetTimer, ForceExitApp, 7600000 ; 1h
 
 CoordMode Pixel, Relative
 CoordMode Mouse, Relative
 
 global maxBattleNonActions := 20
 global maxWaitCount := 5 ;Timeout for quest screen
-global globalTimeoutMax := 80 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
-global maxRounds := 0 ;Set to 0 to disable maxround shutdown
+global maxRounds := 50
+global globalTimeoutMax := 220 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
+global post_attack_button_delay := 5000
 
-global searchURL := "" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
+global searchURL := "http://game.granbluefantasy.jp/#event/teamraid026" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
 
-global summonIconType := misc_icon 
-global summonIconTypeSelected := misc_icon_selected 
+global summonIconType := fav_icon ;Summons shouldn't be broken by viramate's favourite summons settings. Probably.
+global summonIconTypeSelected := fav_icon_selected 
 
-global selectOne := ""
-global selectTwo := ""
-global selectOne_X :=
-global selectOne_Y :=
-global selectTwo_X :=
-global selectTwo_Y :=
+global selectOne := "explus1.png"
+global selectTwo := "explus2.png"
+global selectOne_X := 0
+global selectOne_Y := 0
+global selectTwo_X := 0
+global selectTwo_Y := 0
 
 global genericActions := [selectOne, selectTwo, long_ok, drop_down]
 
@@ -75,36 +76,149 @@ Loop
 				{
 					;First turn actions
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
-
-					attackTurns := attackTurns + 1
 					battleNonActions := 0
-					;SetOugi(bool) ;True for ougi False for nah
-					;UsePot(int) ;0 for blue, 1-4 for green pots on characters
+					attackTurns := attackTurns + 1
+					;UsePot(PotType) ;use "all" for blue pot or the relevant character number for blue pots
+					SetOugi(False)
 
-					;ClickSummon(int)
+					;ClickSummon(summonNumber)
 
-					;ClickSkill(1,1) ;Need to write a better way to parse lots of skills
+					ClickSkill(3,3)
+					ClickSkill(3,1)
+					ClickSkill(2,1)
+					ClickSkill(1,4)
+					ClickSkill(1,3)
+					ClickSkill(1,2)
 
-					;UseSticker(phalanx_sticker) ;Phalanx!
+					UseSticker(phalanx_sticker)
 
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-					
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)					
+					Sleep, % post_attack_button_delay
 					Sleep, % post_attack_button_delay
 
 					;RandomClick(auto_button_X, auto_button_Y, clickVariance)
-
-					;Sleep, post_ougi_delay
-					;Send, {F5}
 				}
-
-				else if (attackTurns >= 1)
+				else if (attackTurns = 1)
 				{
-					;If we're autoing, we shouldn't be able to get here, but we'll just try to attack
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
-
-					attackTurns := attackTurns + 1
 					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					SetOugi(False)
+
+					ClickSkill(2,1)
+
+					UseSticker(laserfocus_sticker)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+				}
+				else if (attackTurns = 2)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					SetOugi(False)
+
+					ClickSkill(2,1)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+				}
+				else if (attackTurns = 3)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					UsePot(0)
+					SetOugi(False)
+
+					ClickSkill(2,1)
+					ClickSkill(1,1)
+
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+				}
+				else if (attackTurns = 4)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					UsePot(3)
+					;UsePot(4)
+					SetOugi(True)
+
+					ClickSkill(2,1)
+					ClickSelectiveSkill(4,1,2)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+					Sleep, % post_ougi_delay
+					Send, {F5}
+				}
+				else if (attackTurns = 5)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					ClickSummon(4)
+					SetOugi(True)
+
+					ClickSkill(4,3)
+					ClickSkill(2,1)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+				}
+				else if (attackTurns = 6)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					battleNonActions := 0
+					attackTurns := attackTurns + 1
+					SetOugi(True)
+
+					ClickSkill(4,2)
+					ClickSkill(3,3)
+					ClickSkill(3,1)
+					ClickSkill(2,1)
+					ClickSkill(2,2)
+					ClickSkill(2,3)
+					ClickSkill(1,3)
+					ClickSKill(1,2)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+					Sleep, % post_attack_button_delay					
+					Sleep, % post_attack_button_delay ;holy shit this is inelegant
+					Sleep, % post_ougi_delay
+					Send, {F5}
 					
+				}
+				else if (attackTurns = 7)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					attackTurns := attackTurns + 1
+					SetOugi(True)
+
+					ClickSkill(3,2)
+					ClickSkill(2,1)
+
+					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
+
+					Sleep, % post_attack_button_delay
+				}
+				else if (attackTurns >= 8)
+				{
+					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					attackTurns := attackTurns + 1
+					SetOugi(True)
+
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 
 					Sleep, % post_attack_button_delay
@@ -238,7 +352,7 @@ Loop
 			{
 				if (usePushBullet = True)
 				{
-					PB_Message := "Target of " . (maxRounds) . " reached. Shutting down."
+					PB_Message := "Target of " . maxRounds . " reached. Shutting down."
 					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, PB_Message))
 				}
 				Sleep, 10000
@@ -254,7 +368,6 @@ Loop
 			GoToPage(searchURL)
 			continue
 		}
-
 		else
 		{
 			updateLog("Huh? We're at " . sURL)
@@ -288,6 +401,6 @@ ForceExitApp:
 SetTimer,  ForceExitApp, Off
 if (usePushBullet = True)
 {
-	updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
+		updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
 }
 ExitApp
