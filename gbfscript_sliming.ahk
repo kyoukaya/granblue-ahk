@@ -1,48 +1,64 @@
 ; Testing environment
 ; Browser: Chromium 52
 ; Language: English
-; Animation/Resolution Settings = [Animation Settings : "Standard", Resolution Settings : "Standard"]
+; Animation/Resolution Settings = [Animation Settings : "Standard", Resolution Settings : "High"]
 ; Browser Version Settings = [Automatic Resizing : "Off", Window Size : "Medium"]
+
+; Needs stylish to disable the button animations with css to use this script
+; .btn-quest-start.multi.se-quest-start,.btn-execute-ready.se-ok{-webkit-animation:normal!important;}
+
+; Automates most of the sliming process, you'll need to select a summon and buff up the room first
+; The script pauses at the start, just press F12 to start it up
 
 #Include gbfscriptConfigUtilities.ahk
 
-SetTimer, ForceExitApp, 7600000 ; 1h
+SetTimer, ForceExitApp, 3600000 ; 1h
+SetTimer, CoopPhase, 1000
 
 CoordMode Pixel, Relative
 CoordMode Mouse, Relative
 
-global maxBattleNonActions := 20
-global maxWaitCount := 7 ;Timeout for quest screen
-global maxRounds := 50 ;Start mementos 10, 83
-global globalTimeoutMax := 200 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
-global post_attack_button_delay := 5000
+global host_order := [0,30,15] ;In mins, in order :[leech,host,leech] i.e. [0,15,45] if you're going first
 
-global searchURL := "http://game.granbluefantasy.jp/#event/teamraid026" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
+global maxBattleNonActions := 8
+global maxWaitCount := 5 ;Timeout for quest screen
+global globalTimeoutMax := 60 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
+global maxRounds := 0 ;Set to 0 to disable maxround shutdown
 
-global summonIconType := fav_icon ;Summons shouldn't be broken by viramate's favourite summons settings. Probably.
-global summonIconTypeSelected := fav_icon_selected 
+global searchURL := "http://game.granbluefantasy.jp/#coopraid" ;This is the home URL, where we'll look for the quest to be started and where we'll return if lost
 
-global selectOne := "meat1.png"
-global selectTwo := "meat2.png"
-global selectOne_X := 0
+global summonIconType := misc_icon ;You'll need to change the .pngs if you're not using viramate's favourites. Somehow using it makes the icons render differently.
+global summonIconTypeSelected := misc_icon_selected 
+
+;init
+global is_hosting := 1
+
+global selectOne := "coop_lasthosted.png"
+global selectTwo := "coop_start.png" 
+global selectThree := "coop_ready.png"
+global selectOne_X := -15
 global selectOne_Y := 0
 global selectTwo_X := 0
 global selectTwo_Y := 0
+global selectThree_X := 0
+global selectThree_Y := 2
 
-global genericActions := [selectOne, selectTwo, long_ok, drop_down]
+global genericActions := [selectOne, selectTwo, selectThree, long_ok, drop_down]
+global battleActions := [attack_button, ok_button]
 
 Gui, Add, ListView, x6 y6 w400 h500 vLogbox LVS_REPORT, %A_Now%|Activity
 	LV_ModifyCol(1, 60)
 	GuiControl, -Hdr, Logbox
 	Gui, Show, w410 h505, GBF Bot Log
 
+Pause, On
 ;----------------------------------------------
 ;Main Loop
 ;----------------------------------------------
 
 Loop
 {
-	Sleep, % default_interval	
+	Sleep, % default_interval
 	globalTimeout := globalTimeout + 1
 
 	if (globalTimeout >= globalTimeoutMax)
@@ -67,7 +83,6 @@ Loop
 		if InStr(sURL, searchBattle)
 		{
 			updateLog("-----In Battle-----")
-			battleActions := [attack_button, ok_button]
 			searchResult := multiImageSearch(coordX, coordY, battleActions)
 
 			if InStr(searchResult, attack_button)
@@ -76,140 +91,27 @@ Loop
 				{
 					;First turn actions
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
+
 					attackTurns := attackTurns + 1
-					;UsePot(PotType) ;use "all" for blue pot or the relevant character number for blue pots
-					SetOugi(False)
+					battleNonActions := 0
+					;SetOugi(bool) ;True for ougi False for nah
+					;UsePot(int) ;0 for blue, 1-4 for green pots on characters
 
-					;ClickSummon(summonNumber)
+					;ClickSummon(int)
 
-					ClickSkill(3,3)
-					ClickSkill(3,1)
-					ClickSkill(2,1)
-					ClickSkill(1,4)
-					ClickSkill(1,3)
-					ClickSkill(1,2)
+					ClickSkill(11) ;ClickSkill now takes a 2/3 digit integer, or an array of them!
+					ClickSkill(11) ;Just to be sure
 
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)					
-					Sleep, % post_attack_button_delay
-					Sleep, % post_attack_button_delay
+					UseSticker(phalanx_sticker) ;Phalanx!
 
-					;RandomClick(auto_button_X, auto_button_Y, clickVariance)
-				}
-				else if (attackTurns = 1)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(False)
-
-					ClickSkill(2,1)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-				}
-				else if (attackTurns = 2)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(False)
-
-					ClickSkill(2,1)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-				}
-				else if (attackTurns = 3)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					UsePot("all")
-					SetOugi(False)
-
-					ClickSkill(2,1)
-					ClickSkill(1,1)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-				}
-				else if (attackTurns = 4)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					UsePot(3)
-					UsePot(4)
-					SetOugi(False)
-
-					ClickSkill(2,1)
-					ClickSelectiveSkill(4,1,2)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-				}
-				else if (attackTurns = 5)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(True)
-
-					ClickSummon(4)
-					ClickSkill(4,3)
-					ClickSkill(2,1)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-					Sleep, % post_ougi_delay
 					Send, {F5}
 				}
-				else if (attackTurns = 6)
+
+				else if (attackTurns >= 1)
 				{
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(True)
 
-					ClickSkill(4,2)
-					ClickSkill(3,3)
-					ClickSkill(3,1)
-					ClickSkill(2,1)
-					ClickSkill(2,2)
-					ClickSkill(2,3)
-					ClickSkill(1,4)
-					ClickSkill(1,3)
-					ClickSKill(1,2)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-					Sleep, % post_attack_button_delay
-					Sleep, % post_ougi_delay
 					Send, {F5}
-					
-				}
-				else if (attackTurns = 7)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(True)
-
-					ClickSkill(3,2)
-					ClickSkill(2,1)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
-				}
-				else if (attackTurns >= 8)
-				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
-					attackTurns := attackTurns + 1
-					SetOugi(True)
-
-					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
-
-					Sleep, % post_attack_button_delay
 				}
 
 				else
@@ -235,7 +137,6 @@ Loop
 					Send, {F5} ;It's been awhile since we could see our attack button so we're refreshing
 					battleNonActions := 0
 				}
-
 				else
 				{
 					battleNonActions := battleNonActions + 1
@@ -246,30 +147,28 @@ Loop
 
 		else if InStr(sURL, searchSelectSummon)
 		{
-			updateLog("-----In Select Summon-----")
-
-			Send {WheelUp}
-			
-			waitCount = 0
-			
+			updateLog("-----In Select Summon-----")			
+			waitCount = 0			
 			selectSummonAutoSelect := [select_party_auto_select, summonIconType, summonIconTypeSelected]
 			searchResult := multiImageSearch(coordX, coordY, selectSummonAutoSelect)
 			
 			if InStr(searchResult, select_party_auto_select)
 			{
-				updateLog("Party Confirm detected, clicking OK button")			
+				updateLog("Party Confirm detected, clicking OK button")
 				RandomClick(coordX + select_party_auto_select_offset_X, coordY + select_party_auto_select_offset_Y, clickVariance) 
 				continue
 			}
+
 			else if InStr(searchResult, summonIconType)
 			{
 				updateLog("Clicking on summon icon")
 				RandomClick(coordX + summonIconType_offset_X, coordY + summonIconType_offset_Y, clickVariance)
 			}
+
 			else if InStr(searchResult, summonIconTypeSelected)
 			{
-				updateLog("Clicking on first summon")	
-				RandomClick(first_summon_X, first_summon_Y, clickVariance) 		
+				updateLog("Clicking on first summon")
+				RandomClick(first_summon_X, first_summon_Y, clickVariance)
 			}
 			continue
 		}
@@ -277,21 +176,30 @@ Loop
 		else if InStr(sURL, searchURL)
 		{
 			updateLog("-----In Quest Select Screen-----")
-			Sleep, % default_interval
-			
+			Sleep, % default_interval			
 			searchResult := multiImageSearch(coordX, coordY, genericActions)
-			if InStr(searchResult, selectOne)
+
+			if InStr(searchResult, selectOne) and (is_hosting = 1)
 			{
-				updateLog("Quest icon detected, clicking")
+				updateLog("Clicking last hosted")
 				waitCount := 0
 				RandomClick(coordX + selectOne_X, coordY + selectOne_Y, clickVariance)
 			}
+
 			else if InStr(searchResult, selectTwo)
 			{
-				updateLog("Clicking quest")
+				updateLog("Clicking start")
 				waitCount := 0
-				RandomClick(coordX + selectTwo_X, coordY + selectTwo_Y, clickVariance)		
+				RandomClick(coordX + selectTwo_X, coordY + selectTwo_Y, clickVariance)
 			}
+
+			else if InStr(searchResult, selectThree)
+			{
+				updateLog("Clicking ready")
+				waitCount := 0
+				RandomClick(coordX + selectThree_X, coordY + selectThree_Y, clickVariance)
+			}
+
 			else if InStr(searchResult, drop_down)
 			{ 
 				updateLog("Not Enough AP dialog found, clicking Use button")
@@ -302,17 +210,19 @@ Loop
 
 				RandomClick(coordX + drop_down_offset2_X, coordY + drop_down_offset2_Y, clickVariance)
 			}
+
 			else if InStr(searchResult, ok_button)
 			{
 				updateLog("Wild OK button has appeared, clicking")
 				RandomClick(coordX + ok_button_offset_X, coordY + ok_button_offset_Y, 0)
 			}
+
 			else 
 			{
 				if(waitCount >= maxWaitCount)
 				{
 					updateLog("Waited long enough, lets reload")
-					Sleep, % default_delay		
+					Sleep, % default_delay
 					waitCount := 0
 					GoToPage(searchURL)
 				}
@@ -326,7 +236,6 @@ Loop
 
 			continue
 		}
-
 		else if InStr(sURL, searchResults)
 		{
 			updateLog("-----In Results Screen-----")
@@ -335,27 +244,52 @@ Loop
 			battleNonActions := 0
 			
 			resultScreenCycles := resultScreenCycles + 1
+			curRound += 1
 
-			if (maxRounds > 0) and (curRound >= (maxRounds - 1))
+			if (maxRounds > 0) and (curRound >= maxRounds)
 			{
 				if (usePushBullet = True)
 				{
 					PB_Message := "Target of " . maxRounds . " reached. Shutting down."
 					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, PB_Message))
-				}
+				}				
 				Sleep, 10000
 				ExitApp
 			}
-			Else
+
+			else if (timerElapsed = 1)
 			{
-				curRound += 1
+				if (usePushBullet = True)
+				{
+					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
+				}
+				Sleep, long_interval
+				ExitApp
 			}
 			
+
 			Sleep, results_delay
 			updateLog("Going to quest select page")
 			GoToPage(searchURL)
 			continue
 		}
+
+		else if InStr(sURL, topPage)
+		{
+			;Probably have to resize the screen with f1 to get this to work in this state
+			updateLog("We're at top page, clicking continue")
+			Sleep, short_interval
+			RandomClick(207, 195, clickVariance)
+		}
+		
+		else if InStr(sURL, authPage)
+		{
+			;Primitive routine for clicking the mobage icon
+			updateLog("We're at auth page, clicking the mobage button")
+			Sleep, short_interval			
+			RandomClick(199, 197, clickVariance)
+		}
+
 		else
 		{
 			updateLog("Huh? We're at " . sURL)
@@ -387,8 +321,19 @@ ExitApp
 
 ForceExitApp:
 SetTimer,  ForceExitApp, Off
-if (usePushBullet = True)
+timerElapsed := 1
+Return
+
+CoopPhase:
+if (is_hosting = 0)
 {
-	updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. Shutting down."))
+	is_hosting := 1
 }
-ExitApp
+else if (is_hosting = 1)
+{
+	is_hosting := 0 
+}
+next_phase_length := host_order.RemoveAt(1) * 1000 * 60
+updateLog("Next phase length " . next_phase_length . ". Is hosting " . is_hosting)
+SetTimer, CoopPhase, % next_phase_length
+Return

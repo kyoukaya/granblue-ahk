@@ -1,6 +1,7 @@
 # granblue-ahk
 
 middle school coding project adapted from https://github.com/UmaiCake/gravel-things
+**Needs viramate**
 
 ## Tested on:
 * Monitor Resolution = 1080p/1440p (Press F1 while the script is running to resize the window correctly)
