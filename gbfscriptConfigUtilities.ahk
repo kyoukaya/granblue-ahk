@@ -4,15 +4,8 @@
 
 ;Pushbullet config
 usePushBullet := True
-<<<<<<< HEAD
-<<<<<<< HEAD
 PB_Token := "" ;Your token here
-=======
-PB_Token := ""
->>>>>>> origin/master
-=======
-PB_Token := ""
->>>>>>> origin/master
+
 PB_Title := "GBF Bot"
 
 ;Coordinates
@@ -45,7 +38,8 @@ global skillY = 700
 
 ;Timings
 global default_button_delay := 250
-global results_delay := 2500
+global default_skill_delay := 475
+global results_delay := 2000
 global post_attack_button_delay := 3500
 global coop_delay := 4500
 global post_ougi_delay := 12000
@@ -57,7 +51,7 @@ global long_interval := 2000
 ;Configs
 global roomJoinClicks := 5
 global clickVariance := 4
-global clickVarianceSmall := 2
+global clickVarianceSmall := 1
 global waitResultMax := 3
 
 ;URL Strings
@@ -71,6 +65,8 @@ global searchStage := "stage"
 global searchSelectSummon := "supporter"
 global searchResults := "result"
 global searchGuildWars := "teamraid"
+global topPage := "#top"
+global authPage := "#authentication"
 
 global coopHomeURL := "http://game.granbluefantasy.jp/#coopraid"
 global coopJoinURL := "http://game.granbluefantasy.jp/#coopraid/offer"
@@ -97,16 +93,17 @@ global SelectiveSkill_Offset_Y := 180
 global image_path := "image/"
 
 global attack_button := "attack_button.png"
+global revive_button := "revive_button.png"
+global rejoin_button := "rejoin_button.png"
 
 global green_pot := "green_pot.png"
 global blue_pot := "blue_pot.png"
 global cancel_button := "cancel_button.png"
+global heal_button := "heal_button.png"
 
 global sticker_button := "sticker_button.png"
 global phalanx_sticker := "phalanx.png"
 global laserfocus_sticker := "laserfocus_sticker.png"
-
-global heal_button := "heal_button.png"
 
 global wind_icon := "wind_icon.png"
 global wind_icon_selected := "wind_icon_selected.png"
@@ -117,16 +114,11 @@ global fav_icon_selected := "fav_icon_selected.png"
 
 global ca_on := "ca_on.png"
 global ca_off := "ca_off.png"
-
 global ok_button := "ok_button.png"
-
-global drop_down := "dropdown.png"
-
-global select_party_auto_select := "select_party_auto_select.png"
-
-global not_enough_ap := "not_enough_ap.png"
-
 global long_ok := "long_ok.png"
+global drop_down := "dropdown.png"
+global select_party_auto_select := "select_party_auto_select.png"
+global not_enough_ap := "not_enough_ap.png"
 
 ;init
 global globalTimeout := 0
@@ -135,6 +127,7 @@ global resultScreenCycles := 0
 global battleNonActions := 0
 global waitCount := 0
 global curRound := 0
+global timerElapsed := 0
 
 ;----------------------------------------------
 ;ImageSearch wrappers
@@ -172,7 +165,6 @@ MultiImageSearch(byref searchResultX, byref searchResultY, imageFileArray)
 
 	for index, imageFileName in imageFileArray
 	{
-		;updateLog("Searching " . imageFileName)
 		if ImageSearchWrapper(singleSearchX, singleSearchY, imageFileName)
 		{
 			searchResultX := singleSearchX
@@ -233,18 +225,19 @@ RandomClick(coordX, coordY, variance)
 	
 	MouseMove coordX + randX, coordY + randY
 	Sleep, 95
-	Click down  ; Presses down the left mouse button and holds it.
+	Click down ;GBF sometimes decides to not detect our clicks using just click, seems to work better like this
 	Sleep, 5
 	Click up
 }
 
 RandomClickWide(coordX, coordY, variance)
 {
+	;This func is pretty much only for clicking the attack button
 	Random, randX, 0 - (variance*2), (variance*2)
 	Random, randY, 0 - variance, variance
 	
 	MouseMove coordX + randX, coordY + randY
-	Click down  ; Presses down the left mouse button and holds it.
+	Click down
 	Sleep, 5
 	Click up
 }
@@ -265,39 +258,59 @@ SearchAndClick(targetImage, clickVariance)
 	}
 }
 
-ClickSkill(character, skillNum)
+ClickSkill(var)
 {
-	offset1 := (character - 1) * skillCharOffset
-	offset2 := (skillNum - 1) * skillXOffset
-	
-	skillCoordX := skillX + offset1 + offset2
-	
-	updateLog("Clicking skill: " . character . "," . skillNum . " at " . skillCoordX . "," . skillY)
-	
-	Sleep % default_button_delay
-	RandomClick(skillCoordX, skillY, clickVarianceSmall)
-	Sleep % default_button_delay
-}
-
-ClickSelectiveSkill(character, skillNum, selectNum)
-{
-	;Only handles to the 4th character 
-	selectNum_X := SelectiveSkill_X + ((selectNum - 1) * SelectiveSkill_Offset_X)
-
-	;To get to the second row of characters
-	if(selectNum > 3)
+	;Can take an array, a 2 digit skill code (charnum, skillnum), or a 3 digit skill code (charnum, skillnum, targetnum)
+	if var is integer
 	{
-		selectNum_Y := SelectiveSkill_Y + SelectiveSkill_Offset_Y
-	}
-	Else
-	{
-		selectNum_Y := SelectiveSkill_Y
-	}
+		character := SubStr(var, 1, 1)
+		skillNum := SubStr(var, 2, 1)
+		if (StrLen(var) = 2)
+		{
+			offset1 := (character - 1) * skillCharOffset
+			offset2 := (skillNum - 1) * skillXOffset
+			
+			skillCoordX := skillX + offset1 + offset2
+			
+			updateLog("Clicking skill: " . character . "," . skillNum . " at " . skillCoordX . "," . skillY)
+			
+			Sleep % default_skill_delay
+			RandomClick(skillCoordX, skillY, clickVarianceSmall)
+			Sleep % default_skill_delay
+		}
+		else if (StrLen(var) = 3) ;selective skills need a target
+		{
+			selectNum := SubStr(var, 3, 1)
+			;Only handles up to the 4th character
+			selectNum_X := SelectiveSkill_X + ((selectNum - 1) * SelectiveSkill_Offset_X)
 
-	ClickSkill(character, skillNum)
-	Sleep, default_button_delay
-	updateLog("Clicking character at " . selectNum_X . ", " . selectNum_Y)
-	RandomClick(selectNum_X, selectNum_Y, clickVariance)
+			;To get to the second row of characters
+			if(selectNum > 3)
+			{
+				selectNum_Y := SelectiveSkill_Y + SelectiveSkill_Offset_Y
+			}
+			else
+			{
+				selectNum_Y := SelectiveSkill_Y
+			}
+
+			ClickSkill(SubStr(var, 1, 2))
+
+			updateLog("Clicking character at " . selectNum_X . ", " . selectNum_Y)
+
+			Sleep % default_skill_delay
+			RandomClick(selectNum_X, selectNum_Y, clickVariance)
+			Sleep % default_skill_delay
+		}
+	}
+	else
+	{
+		for index, value in var
+		{
+			updateLog("Cycling through array at index " . index)
+			ClickSkill(value)
+		}
+	}
 }
 
 SetOugi(bool)
@@ -344,7 +357,7 @@ UseSticker(sticker)
 
 UsePot(PotType)
 {
-	;Using pots is kinda scary so we'll sleep a lot
+	;Doing pot is kinda scary so we'll sleep a lot
 	SearchAndClick(heal_button, clickVariance)
 	Sleep, default_interval
 	checkPots := [blue_pot, green_pot]
@@ -369,19 +382,6 @@ UsePot(PotType)
 		SearchAndClick(cancel_button, clickVariance)
 		Sleep, default_interval
 	}
-}
-
-FindElementInArray(ByRef foundIndex, inputArray, findThis)
-{
-	for index, element in inputArray
-	{
-		if InStr(element, findThis)
-		{
-			foundIndex := index
-			return foundIndex
-		}
-	}
-	return null
 }
 
 ;Pushbullet sniplet by jNizM https://autohotkey.com/boards/viewtopic.php?t=4842
