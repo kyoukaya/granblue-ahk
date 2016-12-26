@@ -7,8 +7,10 @@
 ; Needs stylish to disable the button animations with css to use this script
 ; .btn-quest-start.multi.se-quest-start,.btn-execute-ready.se-ok{-webkit-animation:normal!important;}
 
-; Automates most of the sliming process, you'll need to select a summon and buff up the room first
-; The script pauses at the start, just press F12 to start it up
+; Automates most of the sliming process, you'll need to select a summon first
+; Uses viramate's last hosted to select the quest
+; The script starts paused to allow some time for setting up, just press F12 to start it up when you're ready to go
+; F2 can can be used to forcefully toggle between hosting and not-hosting
 
 #Include gbfscriptConfigUtilities.ahk
 
@@ -18,10 +20,13 @@ SetTimer, CoopPhase, 1000
 CoordMode Pixel, Relative
 CoordMode Mouse, Relative
 
-global host_order := [0,30,15] ;In mins, in order :[leech,host,leech] i.e. [0,15,45] if you're going first
+;In mins, in order :[leech,host,leech] i.e. [0,15,45] if you're hosting first
+;You can just set the first value to 60+ if you want to manually toggle host/leech mode
+;Good to set a bit more than 60 so it doesn't flipflop between host/leech
+global host_order := [60,0,15] 
 
-global maxBattleNonActions := 8
-global maxWaitCount := 5 ;Timeout for quest screen
+global maxBattleNonActions := 10
+global maxWaitCount := 7 ;Timeout for quest screen
 global globalTimeoutMax := 60 ;Set to a bit more than what 1 cycle would take, it'll be considered a time out if we exceed this
 global maxRounds := 0 ;Set to 0 to disable maxround shutdown
 
@@ -51,7 +56,10 @@ Gui, Add, ListView, x6 y6 w400 h500 vLogbox LVS_REPORT, %A_Now%|Activity
 	GuiControl, -Hdr, Logbox
 	Gui, Show, w410 h505, GBF Bot Log
 
-Pause, On
+updateLog("[F1] Resize window [F2] Start/Pause [Esc] Exit")
+updateLog("[F3] Switch between hosting hosting/leeching ")
+Pause
+
 ;----------------------------------------------
 ;Main Loop
 ;----------------------------------------------
@@ -67,7 +75,7 @@ Loop
 
 		if (usePushBullet = True)
 		{
-			updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Warning, bot timed out"))
+			updateLog("Push sent, status: " . PB_PushNote("Warning, bot timed out"))
 		}
 
 		globalTimeout := 0
@@ -94,15 +102,14 @@ Loop
 
 					attackTurns := attackTurns + 1
 					battleNonActions := 0
-					;SetOugi(bool) ;True for ougi False for nah
-					;UsePot(int) ;0 for blue, 1-4 for green pots on characters
 
-					;ClickSummon(int)
+					;ClickSummon(6)
 
 					ClickSkill(11) ;ClickSkill now takes a 2/3 digit integer, or an array of them!
-					ClickSkill(11) ;Just to be sure
 
 					UseSticker(phalanx_sticker) ;Phalanx!
+
+					CheckSkill(11) 
 
 					Send, {F5}
 				}
@@ -110,7 +117,7 @@ Loop
 				else if (attackTurns >= 1)
 				{
 					updateLog("Battle sequence, battle turn count = " . attackTurns)
-
+					CheckSkill(11) 
 					Send, {F5}
 				}
 
@@ -250,8 +257,7 @@ Loop
 			{
 				if (usePushBullet = True)
 				{
-					PB_Message := "Target of " . maxRounds . " reached. Shutting down."
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, PB_Message))
+					updateLog("Push sent, status: " . PB_PushNote("Target of " . maxRounds . " reached. Shutting down."))
 				}				
 				Sleep, 10000
 				ExitApp
@@ -261,13 +267,12 @@ Loop
 			{
 				if (usePushBullet = True)
 				{
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
+					updateLog("Push sent, status: " . PB_PushNote("Time elapsed. " . curRound . " rounds completed. Shutting down."))
 				}
 				Sleep, long_interval
 				ExitApp
 			}
 			
-
 			Sleep, results_delay
 			updateLog("Going to quest select page")
 			GoToPage(searchURL)
@@ -309,6 +314,17 @@ Return
 F1::
 updateLog("Resizing window to " . GBF_winWidth . " x " . GBF_winHeight)
 ResizeWin(GBF_winWidth, GBF_winHeight)
+Return
+
+F2::
+if (is_hosting = 0)
+{
+	is_hosting := 1
+}
+else if (is_hosting = 1)
+{
+	is_hosting := 0 
+}
 Return
 
 F12::Pause

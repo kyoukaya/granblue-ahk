@@ -36,6 +36,9 @@ Gui, Add, ListView, x6 y6 w400 h500 vLogbox LVS_REPORT, %A_Now%|Activity
 	GuiControl, -Hdr, Logbox
 	Gui, Show, w410 h505, GBF Bot Log
 
+updateLog("[F1] Resize window [F2] Start/Pause [Esc] Exit")
+Pause
+
 ;----------------------------------------------
 ;Main Loop
 ;----------------------------------------------
@@ -51,7 +54,7 @@ Loop
 
 		if (usePushBullet = True)
 		{
-			updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Warning, bot timed out"))
+			updateLog("Push sent, status: " . PB_PushNote("Warning, bot timed out"))
 		}
 
 		globalTimeout := 0
@@ -86,6 +89,8 @@ Loop
 					;ClickSkill([11,12,123]) ;ClickSkill now takes a 2/3 digit integer, or an array of them!
 
 					;UseSticker(phalanx_sticker) ;Phalanx!
+
+					;CheckSkill([11,12,123])
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					
@@ -171,6 +176,7 @@ Loop
 		
 		else if InStr(sURL, searchURL)
 		{
+			Send, {WheelDown 8} ;AH is always at the bottom of the page
 			updateLog("-----In Quest Select Screen-----")
 			Sleep, % default_interval			
 			searchResult := multiImageSearch(coordX, coordY, genericActions)
@@ -240,7 +246,7 @@ Loop
 				if (usePushBullet = True)
 				{
 					PB_Message := "Target of " . maxRounds . " reached. Shutting down."
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, PB_Message))
+					updateLog("Push sent, status: " . PB_PushNote(PB_Message))
 				}				
 				Sleep, 10000
 				ExitApp
@@ -250,7 +256,7 @@ Loop
 			{
 				if (usePushBullet = True)
 				{
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
+					updateLog("Push sent, status: " . PB_PushNote("Time elapsed. " . curRound . " rounds completed. Shutting down."))
 				}
 				Sleep, long_interval
 				ExitApp

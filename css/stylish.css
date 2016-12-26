@@ -1,0 +1,17 @@
+/* Import into Stylish */
+/* Mange Styles -> Write New Style -> Import -> Overwrite Style*/
+@-moz-document domain("game.granbluefantasy.jp"), domain("gbf.game.mbga.jp") {
+.prt-raid-log {
+    display: none !important;
+}
+
+.btn-quest-start.multi.se-quest-start,
+.ico-cursor-explain,
+.btn-execute-ready.se-ok {
+    -webkit-animation: normal !important; 
+}
+
+.lis-ability-state[state="1"] {
+	background: #345770 !important;
+}
+}

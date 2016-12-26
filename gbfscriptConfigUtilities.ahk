@@ -3,10 +3,11 @@
 ;----------------------------------------------
 
 ;Pushbullet config
-usePushBullet := True
-PB_Token := "" ;Your token here
+;Set to true and fill in your API token if you want to use pushbullet alerts
 
-PB_Title := "GBF Bot"
+global usePushBullet := False
+global PB_Token := ""
+global PB_Title := "GBF Bot"
 
 ;Coordinates
 global attack_button_X := 470
@@ -30,6 +31,8 @@ global SelectiveSkill_Y := 378
 global battle_portrait_X := 122
 global battle_portrait_Y := 652
 
+global skillCooldownY := 677
+
 ;Viramate skill offsets
 global skillX = 92
 global skillXOffset = 20
@@ -38,11 +41,11 @@ global skillY = 700
 
 ;Timings
 global default_button_delay := 250
-global default_skill_delay := 475
+global default_skill_delay := 400
 global results_delay := 2000
 global post_attack_button_delay := 3500
 global coop_delay := 4500
-global post_ougi_delay := 12000
+global post_ougi_delay := 10000
 
 global short_interval := 500
 global default_interval := 750
@@ -115,6 +118,7 @@ global fav_icon_selected := "fav_icon_selected.png"
 global ca_on := "ca_on.png"
 global ca_off := "ca_off.png"
 global ok_button := "ok_button.png"
+global summon_ok := "summon_ok.png"
 global long_ok := "long_ok.png"
 global drop_down := "dropdown.png"
 global select_party_auto_select := "select_party_auto_select.png"
@@ -226,7 +230,7 @@ RandomClick(coordX, coordY, variance)
 	MouseMove coordX + randX, coordY + randY
 	Sleep, 95
 	Click down ;GBF sometimes decides to not detect our clicks using just click, seems to work better like this
-	Sleep, 5
+	Sleep, 3
 	Click up
 }
 
@@ -238,23 +242,25 @@ RandomClickWide(coordX, coordY, variance)
 	
 	MouseMove coordX + randX, coordY + randY
 	Click down
-	Sleep, 5
+	Sleep, 3
 	Click up
 }
 
-SearchAndClick(targetImage, clickVariance)
+SearchAndClick(targetImage, clickVariance, xOffset := 0, yOffset := 0)
 {
 	searchList := [targetImage]
 	sResult := MultiImageSearch(coordX, coordY, searchList)
 	if InStr(sResult, targetImage)
 	{
-		RandomClick(coordX, coordY, clickVariance)
+		RandomClick(coordX + xOffset, coordY + yOffset, clickVariance)
 		updateLog("We found and clicked " . targetImage)
 		Sleep, default_button_delay
+		return True
 	}
 	Else
 	{
 		updateLog("Search and click failed for " . targetImage)
+		return False
 	}
 }
 
@@ -313,6 +319,63 @@ ClickSkill(var)
 	}
 }
 
+TestForColor(color, X, Y)
+{
+	PixelGetColor, skillStatus, X, Y, RGB
+	if (skillStatus = "0x" . color)
+	{
+		return True
+	}
+	else
+	{
+		return False
+	}
+}
+
+CheckSkill(var)
+{
+	;Takes an int/array of skills and checks if they're on CD if not click through them
+	if var is integer
+	{
+		if (StrLen(var) = 3)
+		{
+			;It's too troublesome to handle targeted skills ):
+			Return
+		}
+		counter := 0
+		character := SubStr(var, 1, 1)
+		skillNum := SubStr(var, 2, 1)
+		offset1 := (character - 1) * skillCharOffset
+		offset2 := (skillNum - 1) * skillXOffset
+		skillCoordX := skillX + offset1 + offset2
+		loop
+		{
+			while (TestForColor("345770", skillCoordX, skillCooldownY) = False) and (TestForColor("1F3443", skillCoordX, skillCooldownY) = False) and InStr(sURL, searchBattle)
+			{
+				if (counter > 30)
+				{
+					counter := 0
+					Send, {F5}
+					Sleep, 2000
+					Continue
+				}
+				counter += 1
+				ClickSkill(var)
+			}
+			Return
+		}
+	}
+	else
+	{
+		for index, value in var
+		{
+			updateLog("CheckSkill Cycling through array at index " . index)
+			CheckSkill(value)
+		}
+		return
+	}
+}
+
 SetOugi(bool)
 {
 	checkOugi := [ca_on, ca_off]
@@ -335,8 +398,10 @@ SetOugi(bool)
 
 ClickSummon(summonNumber)
 {
+	; Rather primitive as is, but hey it works
 	summonX := (summonNumber - 1) * 77
 	summonY := 618
+	counter := 0
 
 	updateLog("Clicking summon: " . summonNumber . " at " . summonX . "," . summonY)
 
@@ -344,7 +409,15 @@ ClickSummon(summonNumber)
 	Sleep, % default_button_delay
 	RandomClick((122 + summonX), summonY, clickVariance)
 	Sleep, % default_button_delay
-	RandomClick(469, 587, clickVariance)
+	while (SearchAndClick(summon_ok, clickVariance) = False)
+	{
+		counter += 1
+		Sleep default_interval
+		if counter > 4
+		{
+			break
+		}
+	}
 	Sleep, % default_button_delay
 }
 
@@ -384,9 +457,9 @@ UsePot(PotType)
 	}
 }
 
-;Pushbullet sniplet by jNizM https://autohotkey.com/boards/viewtopic.php?t=4842
+; Pushbullet sniplet by jNizM https://autohotkey.com/boards/viewtopic.php?t=4842
 
-PB_PushNote(PB_Token, PB_Title, PB_Message)
+PB_PushNote(PB_Message)
 {
 	WinHTTP := ComObjCreate("WinHTTP.WinHttpRequest.5.1")
 	WinHTTP.SetProxy(0)
@@ -524,8 +597,6 @@ Acc_Children(Acc) {
 		Catch e
 		{
 			ErrorLevel := "Invalid IAccessible Object"
-			updateLog(e)
-			PB_PushNote(PB_Token, PB_Title, e)
 		}
 	}
 }

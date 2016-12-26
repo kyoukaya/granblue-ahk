@@ -37,10 +37,12 @@ Gui, Add, ListView, x6 y6 w400 h500 vLogbox LVS_REPORT, %A_Now%|Activity
 	GuiControl, -Hdr, Logbox
 	Gui, Show, w410 h505, GBF Bot Log
 
+updateLog("[F1] Resize window [F2] Start/Pause [Esc] Exit")
+Pause
+
 ;----------------------------------------------
 ;Main Loop
 ;----------------------------------------------
-
 Loop
 {
 	Sleep, % default_interval
@@ -53,7 +55,7 @@ Loop
 
 		if (usePushBullet = True)
 		{
-			updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Warning, bot timed out"))
+			updateLog("Push sent, status: " . PB_PushNote("Warning, bot timed out"))
 		}
 
 		globalTimeout := 0
@@ -80,10 +82,13 @@ Loop
 					battleNonActions := 0
 					attackTurns := attackTurns + 1
 					SetOugi(False)
-
+					ClickSummon(6)
 					ClickSkill([33,31,21,14,13,12])
 
-					UseSticker(phalanx_sticker)
+					UseSticker(phalanx_sticker)			
+
+					CheckSkill([33,31,21,14,13,12])
+
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)				
 					Sleep, post_attack_button_delay
 				}
@@ -97,6 +102,9 @@ Loop
 					ClickSkill(21)
 
 					UseSticker(laserfocus_sticker)
+
+					CheckSkill(21)
+
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
 				}
@@ -108,6 +116,8 @@ Loop
 					SetOugi(False)
 
 					ClickSkill(21)
+
+					CheckSkill(21)
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
@@ -122,6 +132,8 @@ Loop
 
 					ClickSkill([21,11])
 
+					CheckSkill([21,11])
+
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
 				}
@@ -135,6 +147,8 @@ Loop
 					SetOugi(True)
 
 					ClickSkill([21,412])
+
+					CheckSkill([21,412])
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
@@ -151,6 +165,8 @@ Loop
 
 					ClickSkill([43,21])
 
+					CheckSkill([43,21])
+
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
 				}
@@ -162,6 +178,8 @@ Loop
 					SetOugi(True)
 
 					ClickSkill([42,33,31,21,22,23,13,12])
+
+					CheckSkill([42,33,31,21,22,23,13,12])
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)				
 					Sleep, % post_attack_button_delay
@@ -176,6 +194,8 @@ Loop
 					SetOugi(True)
 
 					ClickSkill([32,21])
+
+					CheckSkill([32,21])
 
 					RandomClickWide(attack_button_X, attack_button_Y, clickVariance)
 					Sleep, % post_attack_button_delay
@@ -208,7 +228,7 @@ Loop
 			{
 				;Attempt to use guild war revive pot when dead
 				updateLog("We appear to be dead, we'll try to revive")
-				PB_PushNote(PB_Token, PB_Title, "ded ;_;")
+				PB_PushNote("ded T_T")
 				RandomClick(coordX, coordY, clickVariance)
 				Sleep, default_interval
 				RandomClick(236, 483, clickVariance)
@@ -330,7 +350,7 @@ Loop
 				if (usePushBullet = True)
 				{
 					PB_Message := "Target of " . maxRounds . " reached. Shutting down."
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, PB_Message))
+					updateLog("Push sent, status: " . PB_PushNote(PB_Message))
 				}
 				Sleep, long_interval
 				ExitApp
@@ -339,7 +359,7 @@ Loop
 			{
 				if (usePushBullet = True)
 				{
-					updateLog("Push sent, status: " . PB_PushNote(PB_Token, PB_Title, "Time elapsed. " . curRound . " rounds completed. Shutting down."))
+					updateLog("Push sent, status: " . PB_PushNote("Time elapsed. " . curRound . " rounds completed. Shutting down."))
 				}
 				Sleep, long_interval
 				ExitApp
