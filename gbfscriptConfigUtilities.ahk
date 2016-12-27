@@ -47,7 +47,7 @@ global post_attack_button_delay := 3500
 global coop_delay := 4500
 global post_ougi_delay := 10000
 
-global short_interval := 500
+global short_interval := 400
 global default_interval := 750
 global long_interval := 2000
 
@@ -209,6 +209,8 @@ GoToPage(pageURL)
 	coopHomeCycles := 0
 	resultScreenCycles := 0	
 	battleNonActions := 0
+
+	oldClipboard := Clipboard
 	
 	Sleep, default_interval
 	Send, ^l 
@@ -219,6 +221,7 @@ GoToPage(pageURL)
 	Sleep, 50
 	Send, {ENTER}
 	Sleep, default_interval
+	Clipboard := oldClipboard
 	Return
 }
 
@@ -352,11 +355,11 @@ CheckSkill(var)
 		{
 			while (TestForColor("345770", skillCoordX, skillCooldownY) = False) and (TestForColor("1F3443", skillCoordX, skillCooldownY) = False) and InStr(sURL, searchBattle)
 			{
-				if (counter > 30)
+				if (counter > 10)
 				{
 					counter := 0
 					Send, {F5}
-					Sleep, 2000
+					Sleep, 5000
 					Continue
 				}
 				counter += 1

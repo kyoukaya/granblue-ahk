@@ -23,7 +23,7 @@ CoordMode Mouse, Relative
 ;In mins, in order :[leech,host,leech] i.e. [0,15,45] if you're hosting first
 ;You can just set the first value to 60+ if you want to manually toggle host/leech mode
 ;Good to set a bit more than 60 so it doesn't flipflop between host/leech
-global host_order := [60,0,15] 
+global host_order := [0,0,45] 
 
 global maxBattleNonActions := 10
 global maxWaitCount := 7 ;Timeout for quest screen
@@ -109,6 +109,8 @@ Loop
 
 					UseSticker(phalanx_sticker) ;Phalanx!
 
+					Sleep, default_interval
+
 					CheckSkill(11) 
 
 					Send, {F5}
@@ -116,7 +118,9 @@ Loop
 
 				else if (attackTurns >= 1)
 				{
-					updateLog("Battle sequence, battle turn count = " . attackTurns)
+					updateLog("Battle sequence, battle turn count = " . attackTurns)			
+
+					Sleep, default_interval
 					CheckSkill(11) 
 					Send, {F5}
 				}
